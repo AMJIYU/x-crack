@@ -42,6 +42,17 @@ import (
 	"time"
 )
 
+func GenerateTaskUserPass(ipList []models.IpAddr, userpassList []string) (tasks []models.Service, taskNum int) {
+	for _, u := range userpassList {
+		uk := strings.Split(u, ":")
+		for _, ip := range ipList {
+			scanTask := models.Service{Ip: ip.Ip, Port: ip.Port, Protocol: ip.Protocol, Username: uk[0], Password: uk[1]}
+			tasks = append(tasks, scanTask)
+		}
+	}
+	return tasks, len(tasks)
+}
+
 func GenerateTask(ipList []models.IpAddr, users []string, passwords []string) (tasks []models.Service, taskNum int) {
 	tasks = make([]models.Service, 0)
 
@@ -57,7 +68,7 @@ func GenerateTask(ipList []models.IpAddr, users []string, passwords []string) (t
 	return tasks, len(tasks)
 }
 
-func DistributionTask(tasks []models.Service) () {
+func DistributionTask(tasks []models.Service) {
 	totalTask := len(tasks)
 	scanBatch := totalTask / vars.ScanNum
 	logger.Log.Infoln("Start to scan")
@@ -68,7 +79,9 @@ func DistributionTask(tasks []models.Service) () {
 		curTasks := tasks[vars.ScanNum*i : vars.ScanNum*(i+1)]
 		ExecuteTask(curTasks)
 	}
-
+	//	fmt.Println(totalTask%vars.ScanNum)
+	//	fmt.Println(totalTask/100)
+	//else {ExecuteTask(tasks[:totalTask])}
 	if totalTask%vars.ScanNum > 0 {
 		lastTask := tasks[vars.ScanNum*scanBatch : totalTask]
 		ExecuteTask(lastTask)
@@ -79,7 +92,7 @@ func DistributionTask(tasks []models.Service) () {
 	models.DumpToFile(vars.ResultFile)
 }
 
-func ExecuteTask(tasks []models.Service) () {
+func ExecuteTask(tasks []models.Service) {
 	var wg sync.WaitGroup
 	wg.Add(len(tasks))
 	for _, task := range tasks {
@@ -197,23 +210,32 @@ func Scan(ctx *cli.Context) (err error) {
 
 	if ctx.IsSet("pass_dict") {
 		vars.PassDict = ctx.String("pass_dict")
+		vars.StartTime = time.Now()
+		userDict, uErr := ReadUserDict(vars.UserDict)
+		passDict, pErr := ReadPasswordDict(vars.PassDict)
+		ipList := ReadIpList(vars.IpList)
+		aliveIpList := CheckAlive(ipList)
+		if uErr == nil && pErr == nil {
+			tasks, _ := GenerateTask(aliveIpList, userDict, passDict)
+			RunTask(tasks)
+			// DistributionTask(tasks)
+		}
 	}
-
+	if ctx.IsSet("userpass_dict") {
+		vars.StartTime = time.Now()
+		vars.UserPassDict = ctx.String("userpass_dict")
+		ipList := ReadIpList(vars.IpList)
+		aliveIpList := CheckAlive(ipList)
+		userpassDict, upErr := ReadUserPassDict(vars.UserPassDict)
+		if upErr == nil {
+			tasks, _ := GenerateTaskUserPass(aliveIpList, userpassDict)
+			RunTask(tasks)
+		}
+	}
 	if ctx.IsSet("outfile") {
 		vars.ResultFile = ctx.String("outfile")
 	}
 
-	vars.StartTime = time.Now()
-
-	userDict, uErr := ReadUserDict(vars.UserDict)
-	passDict, pErr := ReadPasswordDict(vars.PassDict)
-	ipList := ReadIpList(vars.IpList)
-	aliveIpList := CheckAlive(ipList)
-	if uErr == nil && pErr == nil {
-		tasks, _ := GenerateTask(aliveIpList, userDict, passDict)
-		RunTask(tasks)
-		// DistributionTask(tasks)
-	}
 	return err
 }
 

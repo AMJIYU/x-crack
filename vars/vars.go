@@ -29,20 +29,20 @@ import (
 
 	"gopkg.in/cheggaaa/pb.v2"
 
+	"strings"
 	"sync"
 	"time"
-	"strings"
 )
 
 var (
 	IpList     = "iplist.txt"
 	ResultFile = "x_crack.txt"
 
-	UserDict = "user.dic"
-	PassDict = "pass.dic"
-
-	TimeOut = 3 * time.Second
-	ScanNum = 5000
+	UserDict     = "user.dic"
+	PassDict     = "pass.dic"
+	UserPassDict = "userpass.dic"
+	TimeOut      = 3 * time.Second
+	ScanNum      = 5000
 
 	DebugMode bool
 

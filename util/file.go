@@ -25,14 +25,14 @@ THE SOFTWARE.
 package util
 
 import (
-	"x-crack/models"
 	"x-crack/logger"
+	"x-crack/models"
 	"x-crack/vars"
 
-	"os"
 	"bufio"
-	"strings"
+	"os"
 	"strconv"
+	"strings"
 )
 
 func ReadIpList(fileName string) (ipList []models.IpAddr) {
@@ -122,4 +122,23 @@ func ReadPasswordDict(passDict string) (password []string, err error) {
 	}
 	password = append(password, "")
 	return password, err
+}
+func ReadUserPassDict(usepassrDict string) (userpass []string, err error) {
+	file, err := os.Open(usepassrDict)
+	if err != nil {
+		logger.Log.Fatalf("Open user dict file err, %v", err)
+	}
+
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanLines)
+
+	for scanner.Scan() {
+		userpass_tmp := strings.TrimSpace(scanner.Text())
+		if userpass_tmp != "" {
+			userpass = append(userpass, userpass_tmp)
+		}
+	}
+	return userpass, err
 }

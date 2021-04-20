@@ -42,6 +42,7 @@ var Scan = cli.Command{
 		stringFlag("ip_list, i", "iplist.txt", "iplist"),
 		stringFlag("user_dict, u", "user.dic", "user dict"),
 		stringFlag("pass_dict, p", "pass.dic", "password dict"),
+		stringFlag("userpass_dict, l", "userpass.dic", "userpassword dict"),
 		stringFlag("outfile, o", "x_crack.txt", "scan result file"),
 	},
 }
